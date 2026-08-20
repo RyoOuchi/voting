@@ -458,7 +458,9 @@ label:has(input:focus-visible) {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  padding: 4px;
+  object-fit: contain;
+  background: white;
 }
 
 .upload-zone.has-image::after {
@@ -741,18 +743,20 @@ label:has(input:focus-visible) {
 .poster-image-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 0.76;
+  aspect-ratio: 0.84;
   overflow: hidden;
   border: clamp(2px, 0.35vw, 5px) solid var(--cream);
-  border-radius: 48% 48% 12px 12px;
-  background: rgba(255, 253, 245, 0.92);
+  border-radius: clamp(7px, 1vw, 14px);
+  background: var(--cream);
   box-shadow: 4px 5px 0 var(--ink);
 }
 
 .poster-image-wrap img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  padding: clamp(4px, 0.8vw, 12px);
+  object-fit: contain;
+  background: var(--cream);
 }
 
 .poster-number {

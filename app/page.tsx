@@ -184,20 +184,23 @@ function loadCanvasImage(source: string) {
   });
 }
 
-function drawCoverImage(
+function drawContainImage(
   context: CanvasRenderingContext2D,
   image: HTMLImageElement,
   x: number,
   y: number,
   width: number,
   height: number,
+  padding = 0,
 ) {
-  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
-  const sourceWidth = width / scale;
-  const sourceHeight = height / scale;
-  const sourceX = (image.naturalWidth - sourceWidth) / 2;
-  const sourceY = (image.naturalHeight - sourceHeight) / 2;
-  context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, x, y, width, height);
+  const availableWidth = Math.max(1, width - padding * 2);
+  const availableHeight = Math.max(1, height - padding * 2);
+  const scale = Math.min(availableWidth / image.naturalWidth, availableHeight / image.naturalHeight);
+  const drawWidth = image.naturalWidth * scale;
+  const drawHeight = image.naturalHeight * scale;
+  const drawX = x + (width - drawWidth) / 2;
+  const drawY = y + (height - drawHeight) / 2;
+  context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
 }
 
 function wrapCanvasText(
@@ -342,45 +345,41 @@ Art direction: energetic Japanese campaign-poster composition, editorial rather 
 
     const imageTop = titleStart + titleLines.length * 120 + 40;
     const imageSize = Math.min(260, bandWidth - 34);
+    const imageHeight = Math.min(310, imageSize * 1.18);
     for (const [index, option] of options.entries()) {
       const centerX = index * bandWidth + bandWidth / 2;
       const x = centerX - imageSize / 2;
       const y = imageTop;
 
-      context.save();
-      context.beginPath();
-      context.arc(centerX, y + imageSize / 2, imageSize / 2 + 12, 0, Math.PI * 2);
       context.fillStyle = "#FFFDF5";
-      context.fill();
+      context.fillRect(x, y, imageSize, imageHeight);
       context.lineWidth = 10;
       context.strokeStyle = "#171713";
-      context.stroke();
-      context.clip();
+      context.strokeRect(x, y, imageSize, imageHeight);
 
       if (option.image) {
         try {
           const image = await loadCanvasImage(option.image);
-          drawCoverImage(context, image, x - 12, y - 12, imageSize + 24, imageSize + 24);
+          drawContainImage(context, image, x, y, imageSize, imageHeight, 16);
         } catch {
           context.fillStyle = option.color;
-          context.fillRect(x - 12, y - 12, imageSize + 24, imageSize + 24);
+          context.fillRect(x + 8, y + 8, imageSize - 16, imageHeight - 16);
         }
       } else {
         context.fillStyle = `${option.color}33`;
-        context.fillRect(x - 12, y - 12, imageSize + 24, imageSize + 24);
+        context.fillRect(x + 8, y + 8, imageSize - 16, imageHeight - 16);
         context.fillStyle = "#171713";
         context.font = "900 92px Arial Black, Arial, sans-serif";
-        context.fillText(String(index + 1).padStart(2, "0"), centerX, y + imageSize / 2);
+        context.fillText(String(index + 1).padStart(2, "0"), centerX, y + imageHeight / 2);
       }
-      context.restore();
 
       context.fillStyle = readableInk(option.color);
       context.strokeStyle = readableInk(option.color) === "#171713" ? "#FFFDF5" : "#171713";
       context.lineWidth = 12;
       context.font = `900 ${options.length > 4 ? 30 : 42}px Arial Black, Arial, sans-serif`;
       const name = (option.name || `Option ${index + 1}`).toUpperCase();
-      context.strokeText(name, centerX, y + imageSize + 68, bandWidth - 22);
-      context.fillText(name, centerX, y + imageSize + 68, bandWidth - 22);
+      context.strokeText(name, centerX, y + imageHeight + 58, bandWidth - 22);
+      context.fillText(name, centerX, y + imageHeight + 58, bandWidth - 22);
     }
 
     context.fillStyle = "#171713";
