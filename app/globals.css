@@ -172,7 +172,7 @@ label:has(input:focus-visible) {
 }
 
 .intro::after {
-  content: "VOTE";
+  content: "投票";
   position: absolute;
   top: 26px;
   right: -24px;
@@ -464,7 +464,7 @@ label:has(input:focus-visible) {
 }
 
 .upload-zone.has-image::after {
-  content: "CHANGE";
+  content: "変更";
   position: absolute;
   right: 5px;
   bottom: 5px;

@@ -23,7 +23,7 @@ const FALLBACK_COLORS = [
 const INITIAL_OPTIONS: BallotOption[] = [
   {
     id: "melon",
-    name: "Melon",
+    name: "メロンソーダ",
     color: "#3BBF8A",
     image: null,
     imageName: null,
@@ -31,7 +31,7 @@ const INITIAL_OPTIONS: BallotOption[] = [
   },
   {
     id: "strawberry",
-    name: "Strawberry",
+    name: "いちごソーダ",
     color: "#EA6D78",
     image: null,
     imageName: null,
@@ -39,7 +39,7 @@ const INITIAL_OPTIONS: BallotOption[] = [
   },
   {
     id: "blue-hawaii",
-    name: "Blue Hawaii",
+    name: "ブルーハワイ",
     color: "#52AFCF",
     image: null,
     imageName: null,
@@ -209,18 +209,20 @@ function wrapCanvasText(
   maxWidth: number,
   maxLines: number,
 ) {
-  const words = text.trim().split(/\s+/);
+  const hasSpaces = /\s/.test(text.trim());
+  const words = hasSpaces ? text.trim().split(/\s+/) : Array.from(text.trim());
+  const separator = hasSpaces ? " " : "";
   const lines: string[] = [];
   let line = "";
   words.forEach((word) => {
-    const attempt = line ? `${line} ${word}` : word;
+    const attempt = line ? `${line}${separator}${word}` : word;
     if (context.measureText(attempt).width <= maxWidth || !line) {
       line = attempt;
     } else if (lines.length < maxLines - 1) {
       lines.push(line);
       line = word;
     } else {
-      line = `${line} ${word}`;
+      line = `${line}${separator}${word}`;
     }
   });
   if (line) lines.push(line);
@@ -228,9 +230,9 @@ function wrapCanvasText(
 }
 
 export default function Home() {
-  const [title, setTitle] = useState("Which soda wins summer?");
-  const [eyebrow, setEyebrow] = useState("THE NEIGHBORHOOD TASTE TEST");
-  const [callout, setCallout] = useState("PICK ONE. SETTLE THE DEBATE.");
+  const [title, setTitle] = useState("夏の推しソーダはどれ？");
+  const [eyebrow, setEyebrow] = useState("ご近所ソーダ総選挙");
+  const [callout, setCallout] = useState("ひとつ選んで、決着をつけよう。");
   const [options, setOptions] = useState<BallotOption[]>(INITIAL_OPTIONS);
   const [notice, setNotice] = useState<string | null>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -252,7 +254,7 @@ export default function Home() {
       ...current,
       {
         id: createId(),
-        name: `Option ${nextNumber}`,
+        name: `候補${nextNumber}`,
         color: FALLBACK_COLORS[current.length % FALLBACK_COLORS.length],
         image: null,
         imageName: null,
@@ -268,11 +270,11 @@ export default function Home() {
 
   const handleFile = (id: string, file?: File) => {
     if (!file || !file.type.startsWith("image/")) {
-      showNotice("Choose a PNG, JPG, or WebP image.");
+      showNotice("PNG、JPG、WebP形式の画像を選んでください。");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      showNotice("That image is over the 10 MB limit.");
+      showNotice("画像は10MB以下にしてください。");
       return;
     }
 
@@ -282,30 +284,41 @@ export default function Home() {
       updateOption(id, { image, imageName: file.name, colorDetected: false });
       const color = await detectPrimaryColor(image);
       updateOption(id, { color, colorDetected: true });
-      showNotice(`Palette found: ${color}`);
+      showNotice(`画像から色を抽出しました：${color}`);
     };
     reader.readAsDataURL(file);
   };
 
   const generatedPrompt = useMemo(() => {
     const optionList = options
-      .map((option, index) => `${index + 1}. ${option.name || `Option ${index + 1}`} — color ${option.color}`)
+      .map((option, index) => `${index + 1}. ${option.name || `候補${index + 1}`} — 使用色 ${option.color}`)
       .join("\n");
 
-    return `Create a finished square voting pamphlet using the attached draft image as the layout and color reference.
+    return `添付した下書き画像を構図と配色の参考にして、正方形の投票用パンフレットを完成させてください。
 
-QUESTION: “${title}”
-TOP LABEL: “${eyebrow}”
-OPTIONS:
+【投票の質問】「${title}」
+【上部ラベル】「${eyebrow}」
+【選択肢】
 ${optionList}
-CALL TO ACTION: “${callout}”
+【呼びかけ】「${callout}」
 
-Art direction: energetic Japanese campaign-poster composition, editorial rather than corporate. Build bold vertical color fields from the supplied option colors. Give every option equal visual weight and keep each uploaded product image recognizable, cleanly cut out, and paired only with its correct name. Use oversized, tightly composed headline typography, subtle print grain, crisp high-contrast outlines, and a playful retro retail-advertising feel. Preserve the spelling and order above exactly. Do not invent brands, logos, prices, dates, prizes, legal copy, or additional options. Keep all key text safely inside the image. Output one polished 1:1 social-ready poster at high resolution.`;
+【必須条件】
+・画像内に表示する文章は、数字と色コードを除き、すべて自然な日本語にしてください。
+・質問、上部ラベル、選択肢名、呼びかけは、上記の表記・順番を一字一句変えずに使用してください。
+・各選択肢を同じ大きさで扱い、アップロード画像は切り取らず、全体が見える状態で正しい選択肢名と組み合わせてください。
+・指定した色を各選択肢の背景色として使い、縦方向の大胆な色面を構成してください。
+・ブランド名、ロゴ、価格、日付、景品、注意書き、追加の選択肢を勝手に作らないでください。
+
+【アートディレクション】
+日本の選挙ポスターや店頭広告を思わせる、元気で編集的な構成にしてください。企業向けの無難なデザインにはせず、大きく密度の高い見出し、わずかな紙の粒子感、くっきりした高コントラストの縁取り、遊び心のあるレトロな広告表現を使ってください。重要な文字はすべて安全領域内に収め、読みやすさを最優先してください。
+
+【出力結果】
+SNS投稿に使える高解像度の1:1正方形画像を、完成版として1枚だけ出力してください。画像内の文字はすべて日本語にしてください。`;
   }, [callout, eyebrow, options, title]);
 
   const copyPrompt = async () => {
     await navigator.clipboard.writeText(generatedPrompt);
-    showNotice("Prompt copied to clipboard.");
+    showNotice("プロンプトをコピーしました。");
   };
 
   const exportDraft = async () => {
@@ -377,7 +390,7 @@ Art direction: energetic Japanese campaign-poster composition, editorial rather 
       context.strokeStyle = readableInk(option.color) === "#171713" ? "#FFFDF5" : "#171713";
       context.lineWidth = 12;
       context.font = `900 ${options.length > 4 ? 30 : 42}px Arial Black, Arial, sans-serif`;
-      const name = (option.name || `Option ${index + 1}`).toUpperCase();
+      const name = option.name || `候補${index + 1}`;
       context.strokeText(name, centerX, y + imageHeight + 58, bandWidth - 22);
       context.fillText(name, centerX, y + imageHeight + 58, bandWidth - 22);
     }
@@ -389,70 +402,70 @@ Art direction: energetic Japanese campaign-poster composition, editorial rather 
     context.fillText(callout.toUpperCase(), size / 2, size - 154, size - 210);
     context.font = "700 23px Arial, sans-serif";
     context.fillStyle = "rgba(255,253,245,.86)";
-    context.fillText("DRAFT COMPOSITION • ADD THIS IMAGE TO YOUR LLM PROMPT", size / 2, size - 42);
+    context.fillText("構図の下書き • この画像をLLMのプロンプトに添付してください", size / 2, size - 42);
 
     const link = document.createElement("a");
-    link.download = "ballot-lab-draft.png";
+    link.download = "投票ラボ-下書き.png";
     link.href = canvas.toDataURL("image/png");
     link.click();
-    showNotice("Draft image downloaded.");
+    showNotice("下書き画像をダウンロードしました。");
   };
 
   return (
     <main>
       <header className="site-header">
-        <a className="brand" href="#top" aria-label="Ballot Lab home">
-          <span className="brand-mark">BL</span>
+        <a className="brand" href="#top" aria-label="投票ラボ ホーム">
+          <span className="brand-mark">投</span>
           <span>
-            <strong>Ballot Lab</strong>
-            <small>MAKE A LITTLE NOISE</small>
+            <strong>投票ラボ</strong>
+            <small>みんなの推しを決めよう</small>
           </span>
         </a>
-        <div className="header-progress" aria-label="Workflow progress">
-          <span className="progress-step active"><b>01</b> Build</span>
+        <div className="header-progress" aria-label="作成手順">
+          <span className="progress-step active"><b>01</b> つくる</span>
           <span className="progress-line" />
-          <span className="progress-step"><b>02</b> Share</span>
+          <span className="progress-step"><b>02</b> 仕上げる</span>
         </div>
-        <a className="header-link" href="#prompt">Your LLM prompt <span aria-hidden="true">↘</span></a>
+        <a className="header-link" href="#prompt">LLM用プロンプト <span aria-hidden="true">↘</span></a>
       </header>
 
       <section className="intro" id="top">
-        <p className="kicker"><span>NEW</span> Turn any friendly debate into a poster</p>
-        <h1>Make your pick<br /><em>impossible to ignore.</em></h1>
-        <p className="intro-copy">Add the contenders. Drop in their photos. We’ll pull the colors and compose a bold visual ballot you can finish with your favorite image model.</p>
+        <p className="kicker"><span>新機能</span> いつもの話題を投票ポスターに</p>
+        <h1>あなたの一票を<br /><em>見逃せなくする。</em></h1>
+        <p className="intro-copy">候補と写真を追加するだけ。画像から色を読み取り、目を引く投票ポスターの下書きと、画像生成AIに渡せる日本語プロンプトをつくります。</p>
       </section>
 
-      <section className="studio-shell" aria-label="Pamphlet builder">
+      <section className="studio-shell" aria-label="投票ポスター作成画面">
         <div className="builder-panel">
           <div className="panel-heading">
             <span className="panel-number">01</span>
             <div>
-              <p>Build your ballot</p>
-              <span>Everything updates live</span>
+              <p>投票内容をつくる</p>
+              <span>編集内容はすぐに反映されます</span>
             </div>
           </div>
 
           <div className="field-group">
-            <label htmlFor="question">The big question</label>
+            <label htmlFor="question">投票の質問</label>
             <input id="question" value={title} maxLength={54} onChange={(event) => setTitle(event.target.value)} />
             <span className="character-count">{title.length}/54</span>
           </div>
 
           <div className="field-row">
             <div className="field-group compact">
-              <label htmlFor="eyebrow">Top label</label>
+              <label htmlFor="eyebrow">上部ラベル</label>
               <input id="eyebrow" value={eyebrow} maxLength={36} onChange={(event) => setEyebrow(event.target.value)} />
             </div>
             <div className="field-group compact">
-              <label htmlFor="callout">Call to action</label>
+              <label htmlFor="callout">呼びかけ</label>
               <input id="callout" value={callout} maxLength={40} onChange={(event) => setCallout(event.target.value)} />
             </div>
           </div>
 
           <div className="options-heading">
             <div>
-              <h2>The contenders</h2>
-              <p>2–6 options. Photos work best on a simple background.</p>
+              <h2>投票の候補</h2>
+              <p>候補は2〜6個。背景がシンプルな写真がおすすめです。</p>
             </div>
             <span>{options.length}/6</span>
           </div>
@@ -463,7 +476,7 @@ Art direction: energetic Japanese campaign-poster composition, editorial rather 
                 <div className="option-card-top">
                   <span className="option-index">{String(index + 1).padStart(2, "0")}</span>
                   <input
-                    aria-label={`Name for option ${index + 1}`}
+                    aria-label={`候補${index + 1}の名前`}
                     className="option-name"
                     value={option.name}
                     maxLength={24}
@@ -474,7 +487,7 @@ Art direction: energetic Japanese campaign-poster composition, editorial rather 
                     type="button"
                     onClick={() => removeOption(option.id)}
                     disabled={options.length <= 2}
-                    aria-label={`Remove ${option.name}`}
+                    aria-label={`${option.name}を削除`}
                   >
                     ×
                   </button>
@@ -491,11 +504,11 @@ Art direction: energetic Japanese campaign-poster composition, editorial rather 
                     }}
                   >
                     {option.image ? (
-                      <img src={option.image} alt={`${option.name} upload preview`} />
+                      <img src={option.image} alt={`${option.name}のアップロード画像`} />
                     ) : (
                       <>
                         <span className="upload-plus">+</span>
-                        <span>Drop photo</span>
+                        <span>写真を追加</span>
                       </>
                     )}
                     <input
@@ -508,11 +521,11 @@ Art direction: energetic Japanese campaign-poster composition, editorial rather 
 
                   <div className="color-control">
                     <div>
-                      <span>Option color</span>
+                      <span>候補の色</span>
                       <strong>{option.color}</strong>
                     </div>
                     <label className="color-swatch" style={{ background: option.color }}>
-                      <span className="sr-only">Choose color for {option.name}</span>
+                      <span className="sr-only">{option.name}の色を選択</span>
                       <input
                         type="color"
                         value={option.color}
@@ -520,7 +533,7 @@ Art direction: energetic Japanese campaign-poster composition, editorial rather 
                       />
                     </label>
                     <span className={`color-status ${option.colorDetected ? "detected" : ""}`}>
-                      {option.colorDetected ? "Auto-picked" : "Editable"}
+                      {option.colorDetected ? "自動抽出済み" : "色を変更可能"}
                     </span>
                   </div>
                 </div>
@@ -529,16 +542,16 @@ Art direction: energetic Japanese campaign-poster composition, editorial rather 
           </div>
 
           <button className="add-option" type="button" onClick={addOption} disabled={options.length >= 6}>
-            <span>+</span> New option
+            <span>+</span> 候補を追加
           </button>
         </div>
 
         <div className="preview-panel">
           <div className="preview-toolbar">
             <div>
-              <span className="live-dot" /> LIVE POSTER
+              <span className="live-dot" /> ポスターをプレビュー
             </div>
-            <button type="button" onClick={exportDraft}>Download draft <span aria-hidden="true">↓</span></button>
+            <button type="button" onClick={exportDraft}>下書きを保存 <span aria-hidden="true">↓</span></button>
           </div>
 
           <div className="poster-frame">
@@ -549,10 +562,10 @@ Art direction: energetic Japanese campaign-poster composition, editorial rather 
               <div className="poster-grain" />
               <div className="poster-topline">
                 <span>★</span>
-                <strong>{eyebrow || "YOUR TASTE TEST"}</strong>
+                <strong>{eyebrow || "みんなの推し総選挙"}</strong>
                 <span>★</span>
               </div>
-              <h2>{title || "What gets your vote?"}</h2>
+              <h2>{title || "あなたの一票はどれ？"}</h2>
               <div className="poster-options">
                 {options.map((option, index) => (
                   <div className="poster-option" key={option.id}>
@@ -563,61 +576,61 @@ Art direction: energetic Japanese campaign-poster composition, editorial rather 
                       ) : (
                         <div className="poster-placeholder">
                           <span>{(option.name || "?").slice(0, 1).toUpperCase()}</span>
-                          <small>ADD PHOTO</small>
+                          <small>写真を追加</small>
                         </div>
                       )}
                     </div>
-                    <h3 style={{ color: readableInk(option.color) }}>{option.name || `Option ${index + 1}`}</h3>
+                    <h3 style={{ color: readableInk(option.color) }}>{option.name || `候補${index + 1}`}</h3>
                   </div>
                 ))}
               </div>
               <div className="poster-callout">
-                <span>VOTE NOW</span>
-                <strong>{callout || "PICK YOUR FAVORITE"}</strong>
+                <span>投票しよう</span>
+                <strong>{callout || "あなたの推しを選ぼう"}</strong>
                 <span aria-hidden="true">→</span>
               </div>
               <div className="poster-footer">
-                <span>ONE QUESTION</span><b>•</b><span>ONE PICK</span><b>•</b><span>BRAGGING RIGHTS</span>
+                <span>ひとつの質問</span><b>•</b><span>ひとつの選択</span><b>•</b><span>みんなで決着</span>
               </div>
             </div>
           </div>
-          <p className="preview-note"><span>Tip</span> Your exported draft becomes the visual blueprint for the final LLM-generated pamphlet.</p>
+          <p className="preview-note"><span>ヒント</span> 保存した下書き画像が、LLMで完成版をつくるための構図見本になります。</p>
         </div>
       </section>
 
       <section className="prompt-section" id="prompt">
         <div className="prompt-intro">
           <span className="panel-number inverted">02</span>
-          <p>Finish with AI</p>
-          <h2>Your art director,<br />briefed and ready.</h2>
-          <p className="prompt-copy">Download the draft above, attach it to your favorite image-capable LLM, then paste this prompt. The option names, order, and colors update as you edit.</p>
+          <p>AIで完成させる</p>
+          <h2>LLMへの入力内容は<br />これで完成。</h2>
+          <p className="prompt-copy">上の下書き画像を保存し、画像を扱えるLLMへ添付して、この日本語プロンプトを貼り付けてください。候補名・順番・色は編集内容に合わせて自動更新されます。</p>
           <ol>
-            <li><span>1</span> Download the draft PNG</li>
-            <li><span>2</span> Attach it to your LLM</li>
-            <li><span>3</span> Paste the prompt and generate</li>
+            <li><span>1</span> 下書きPNGを保存する</li>
+            <li><span>2</span> LLMへ画像を添付する</li>
+            <li><span>3</span> プロンプトを貼って生成する</li>
           </ol>
         </div>
         <div className="prompt-card">
           <div className="prompt-card-head">
-            <span>READY-TO-PASTE PROMPT</span>
-            <button type="button" onClick={copyPrompt}>Copy prompt <span aria-hidden="true">⧉</span></button>
+            <span>LLMへ貼り付ける日本語プロンプト</span>
+            <button type="button" onClick={copyPrompt}>プロンプトをコピー <span aria-hidden="true">⧉</span></button>
           </div>
           <pre>{generatedPrompt}</pre>
           <div className="prompt-card-foot">
-            <span><b>{options.length}</b> options included</span>
-            <span><b>1:1</b> output ratio</span>
-            <span><b>HQ</b> recommended</span>
+            <span><b>{options.length}</b>個の候補を反映</span>
+            <span>出力比率 <b>1:1</b></span>
+            <span><b>高画質</b>を推奨</span>
           </div>
         </div>
       </section>
 
       <footer>
         <div className="brand footer-brand">
-          <span className="brand-mark">BL</span>
-          <span><strong>Ballot Lab</strong><small>FRIENDLY DEBATES, BEAUTIFULLY SETTLED</small></span>
+          <span className="brand-mark">投</span>
+          <span><strong>投票ラボ</strong><small>楽しい議論を、きれいに決着</small></span>
         </div>
-        <p>Made for snack rankings, team picks, party polls, and every tiny question that deserves a big poster.</p>
-        <a href="#top">Back to top ↑</a>
+        <p>お菓子の人気投票、チーム分け、パーティーのアンケート。どんな小さな疑問も、大きなポスターに。</p>
+        <a href="#top">ページ上部へ ↑</a>
       </footer>
 
       <div className={`toast ${notice ? "show" : ""}`} role="status" aria-live="polite">{notice}</div>

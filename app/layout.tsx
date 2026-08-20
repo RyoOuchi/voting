@@ -7,9 +7,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const title = "Ballot Lab — Make your pick impossible to ignore";
+  const title = "投票ラボ — あなたの一票を、見逃せなくする";
   const description =
-    "Build a bold voting pamphlet from your own options and photos, extract a color palette automatically, and generate an art-directed prompt for your favorite image model.";
+    "候補と写真から目を引く投票ポスターを作成。画像の色を自動抽出し、画像生成AIへ渡せる日本語プロンプトまでつくります。";
 
   return {
     metadataBase: new URL(origin),
@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [{ url: `${origin}/og.png`, width: 1731, height: 909, alt: "Ballot Lab voting poster studio" }],
+      images: [{ url: `${origin}/og.png`, width: 1731, height: 909, alt: "投票ラボの投票ポスター作成画面" }],
     },
     twitter: {
       card: "summary_large_image",
@@ -36,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <body>{children}</body>
     </html>
   );
