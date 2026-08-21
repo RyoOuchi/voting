@@ -384,7 +384,7 @@ A4横向き（297×210mm、比率1.414:1）、300dpi相当の高解像度（3508
     const boardBottom = 2305;
     const usableWidth = width - margin * 2;
     const columnWidth = (usableWidth - gap * (options.length - 1)) / options.length;
-    const candidateHeight = 470;
+    const candidateHeight = 540;
     const voteTop = boardTop + candidateHeight;
     const voteHeight = boardBottom - voteTop;
 
@@ -395,36 +395,35 @@ A4横向き（297×210mm、比率1.414:1）、300dpi相当の高解像度（3508
       context.fillStyle = option.color;
       context.fillRect(x, boardTop, columnWidth, candidateHeight);
 
-      const imageWidth = Math.min(columnWidth - 70, 300);
-      const imageHeight = 300;
-      const imageX = centerX - imageWidth / 2;
-      const imageY = boardTop + 32;
+      const imageSize = Math.min(columnWidth - 44, 450);
+      const imageX = centerX - imageSize / 2;
+      const imageY = boardTop + 16;
       context.fillStyle = "#FFFDF5";
-      context.fillRect(imageX, imageY, imageWidth, imageHeight);
+      context.fillRect(imageX, imageY, imageSize, imageSize);
       context.lineWidth = 7;
       context.strokeStyle = "#171713";
-      context.strokeRect(imageX, imageY, imageWidth, imageHeight);
+      context.strokeRect(imageX, imageY, imageSize, imageSize);
 
       if (option.image) {
         try {
           const image = await loadCanvasImage(option.image);
-          drawContainImage(context, image, imageX, imageY, imageWidth, imageHeight, 18);
+          drawContainImage(context, image, imageX, imageY, imageSize, imageSize, 12);
         } catch {
           context.fillStyle = `${option.color}33`;
-          context.fillRect(imageX + 8, imageY + 8, imageWidth - 16, imageHeight - 16);
+          context.fillRect(imageX + 8, imageY + 8, imageSize - 16, imageSize - 16);
         }
       } else {
         context.fillStyle = `${option.color}33`;
-        context.fillRect(imageX + 8, imageY + 8, imageWidth - 16, imageHeight - 16);
+        context.fillRect(imageX + 8, imageY + 8, imageSize - 16, imageSize - 16);
         context.fillStyle = "#171713";
         context.font = "900 88px Arial Black, Arial, sans-serif";
-        context.fillText(String(index + 1).padStart(2, "0"), centerX, imageY + imageHeight / 2);
+        context.fillText(String(index + 1).padStart(2, "0"), centerX, imageY + imageSize / 2);
       }
 
       context.fillStyle = readableInk(option.color);
       context.font = `900 ${options.length > 4 ? 34 : 44}px Arial Black, Arial, sans-serif`;
       const name = option.name || `候補${index + 1}`;
-      context.fillText(name, centerX, boardTop + 405, columnWidth - 32);
+      context.fillText(name, centerX, boardTop + 510, columnWidth - 32);
 
       context.fillStyle = "#FFFDF5";
       context.fillRect(x, voteTop, columnWidth, voteHeight);
@@ -433,7 +432,7 @@ A4横向き（297×210mm、比率1.414:1）、300dpi相当の高解像度（3508
       context.strokeRect(x, voteTop, columnWidth, voteHeight);
 
       context.fillStyle = "#171713";
-      context.font = `800 ${options.length > 4 ? 24 : 30}px Arial, sans-serif`;
+      context.font = `900 ${options.length > 4 ? 48 : 62}px Arial Black, Arial, sans-serif`;
       context.fillText("この欄にシールを貼って投票", centerX, voteTop + 62, columnWidth - 30);
 
     }
