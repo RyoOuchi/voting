@@ -27,6 +27,14 @@ test("Netlify設定とクライアント専用構成を維持する", async () =
   assert.match(config, /publish = "dist"/);
   assert.match(source, /detectPrimaryColor/);
   assert.match(source, /canvas\.toDataURL\("image\/png"\)/);
+  assert.match(source, /const width = 3508/);
+  assert.match(source, /const height = 2480/);
+  assert.match(source, /A4横向き（297×210mm/);
+  assert.match(source, /この欄にシールを貼って投票/);
+  assert.match(source, /円形ガイド、丸い点、シール、集計記号/);
+  assert.match(source, /架空の投票結果を描かないでください/);
+  assert.doesNotMatch(source, /context\.arc/);
+  assert.doesNotMatch(source, /sticker-grid/);
   assert.ok(!files.includes(".openai"));
   assert.ok(!files.includes("worker"));
   assert.ok(!files.includes("db"));

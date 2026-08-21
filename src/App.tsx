@@ -232,7 +232,7 @@ function wrapCanvasText(
 export default function Home() {
   const [title, setTitle] = useState("夏の推しソーダはどれ？");
   const [eyebrow, setEyebrow] = useState("ご近所ソーダ総選挙");
-  const [callout, setCallout] = useState("ひとつ選んで、決着をつけよう。");
+  const [callout, setCallout] = useState("好きな候補の欄にシールを貼って投票！");
   const [options, setOptions] = useState<BallotOption[]>(INITIAL_OPTIONS);
   const [notice, setNotice] = useState<string | null>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -294,26 +294,38 @@ export default function Home() {
       .map((option, index) => `${index + 1}. ${option.name || `候補${index + 1}`} — 使用色 ${option.color}`)
       .join("\n");
 
-    return `添付した下書き画像を構図と配色の参考にして、正方形の投票用パンフレットを完成させてください。
+    return `添付した下書き画像を構図と配色の参考にして、A4横向きのシール投票用ポスターを完成させてください。
 
 【投票の質問】「${title}」
 【上部ラベル】「${eyebrow}」
 【選択肢】
 ${optionList}
-【呼びかけ】「${callout}」
+【投票方法】「${callout}」
+
+【用途】
+このポスターをA4横向きで印刷して掲示し、来場者が好きな候補の欄へ丸いシールを1枚貼って投票します。
 
 【必須条件】
 ・画像内に表示する文章は、数字と色コードを除き、すべて自然な日本語にしてください。
-・質問、上部ラベル、選択肢名、呼びかけは、上記の表記・順番を一字一句変えずに使用してください。
+・質問、上部ラベル、選択肢名、投票方法は、上記の表記・順番を一字一句変えずに使用してください。
 ・各選択肢を同じ大きさで扱い、アップロード画像は切り取らず、全体が見える状態で正しい選択肢名と組み合わせてください。
-・指定した色を各選択肢の背景色として使い、縦方向の大胆な色面を構成してください。
+・指定した色を各選択肢の見出しや境界線に使用してください。
 ・ブランド名、ロゴ、価格、日付、景品、注意書き、追加の選択肢を勝手に作らないでください。
 
+【シール投票欄の設計】
+・用紙の下半分以上を、実際にシールを貼れる明るい無地の投票欄として確保してください。
+・選択肢ごとに同じ幅の縦列を1つずつ作り、境界線で明確に区切ってください。
+・各列の上部には対応する画像と選択肢名、その下には大きな投票スペースを配置してください。
+・直径10〜15mm程度の丸いシールを複数貼れる、十分な余白を確保してください。
+・各投票欄には「この欄にシールを貼って投票」という案内だけを表示してください。
+・円形ガイド、丸い点、シール、集計記号など、投票済みに見える要素は一切生成しないでください。
+・案内文以外の投票欄は完全な空白にしてください。架空の投票結果を描かないでください。
+
 【アートディレクション】
-日本の選挙ポスターや店頭広告を思わせる、元気で編集的な構成にしてください。企業向けの無難なデザインにはせず、大きく密度の高い見出し、わずかな紙の粒子感、くっきりした高コントラストの縁取り、遊び心のあるレトロな広告表現を使ってください。重要な文字はすべて安全領域内に収め、読みやすさを最優先してください。
+日本の選挙ポスターや店頭アンケートを思わせる、元気で編集的な構成にしてください。上部は大胆な見出しと候補画像で楽しく見せ、下部の投票欄はシールを貼りやすいよう装飾を控えてください。わずかな紙の粒子感、くっきりした高コントラストの縁取り、遊び心のあるレトロな広告表現を使いながら、印刷時の読みやすさと書き込みやすさを最優先してください。重要な要素は裁ち落としを避け、安全領域内に収めてください。
 
 【出力結果】
-SNS投稿に使える高解像度の1:1正方形画像を、完成版として1枚だけ出力してください。画像内の文字はすべて日本語にしてください。`;
+A4横向き（297×210mm、比率1.414:1）、300dpi相当の高解像度（3508×2480px）の印刷用画像を、完成版として1枚だけ出力してください。画像内の文字はすべて日本語にし、投票欄は空のままにしてください。`;
   }, [callout, eyebrow, options, title]);
 
   const copyPrompt = async () => {
@@ -322,90 +334,116 @@ SNS投稿に使える高解像度の1:1正方形画像を、完成版として1�
   };
 
   const exportDraft = async () => {
-    const size = 1400;
+    const width = 3508;
+    const height = 2480;
     const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
+    canvas.width = width;
+    canvas.height = height;
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    const bandWidth = size / options.length;
+    context.fillStyle = "#FFFDF5";
+    context.fillRect(0, 0, width, height);
+
+    const bandWidth = width / options.length;
     options.forEach((option, index) => {
       context.fillStyle = option.color;
-      context.fillRect(index * bandWidth, 0, bandWidth + 1, size);
+      context.fillRect(index * bandWidth, 0, bandWidth + 1, 42);
     });
 
-    context.fillStyle = "rgba(255, 253, 245, 0.95)";
-    context.fillRect(0, 0, size, 118);
     context.fillStyle = "#171713";
-    context.font = "800 34px Arial, sans-serif";
+    context.fillRect(0, 42, width, 570);
+    context.fillStyle = "#FFFDF5";
+    context.font = "800 42px Arial, sans-serif";
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.fillText(eyebrow.toUpperCase(), size / 2, 61, size - 110);
+    context.fillText(eyebrow, width / 2, 125, width - 240);
 
-    context.font = "900 112px Arial Black, Arial, sans-serif";
-    const titleLines = wrapCanvasText(context, title.toUpperCase(), size - 160, 3);
-    const titleStart = 205;
+    context.font = "900 150px Arial Black, Arial, sans-serif";
+    const titleLines = wrapCanvasText(context, title, width - 320, 2);
+    const titleStart = titleLines.length === 1 ? 315 : 255;
     context.lineJoin = "round";
     context.strokeStyle = "#171713";
-    context.lineWidth = 25;
+    context.lineWidth = 18;
     context.fillStyle = "#FFFDF5";
     titleLines.forEach((line, index) => {
-      const y = titleStart + index * 120;
-      context.strokeText(line, size / 2, y, size - 120);
-      context.fillText(line, size / 2, y, size - 120);
+      const y = titleStart + index * 150;
+      context.strokeText(line, width / 2, y, width - 240);
+      context.fillText(line, width / 2, y, width - 240);
     });
 
-    const imageTop = titleStart + titleLines.length * 120 + 40;
-    const imageSize = Math.min(260, bandWidth - 34);
-    const imageHeight = Math.min(310, imageSize * 1.18);
-    for (const [index, option] of options.entries()) {
-      const centerX = index * bandWidth + bandWidth / 2;
-      const x = centerX - imageSize / 2;
-      const y = imageTop;
+    context.fillStyle = "#E7FF52";
+    context.fillRect(420, 515, width - 840, 112);
+    context.fillStyle = "#171713";
+    context.font = "900 42px Arial Black, Arial, sans-serif";
+    context.fillText(callout, width / 2, 571, width - 900);
 
+    const margin = 100;
+    const gap = 22;
+    const boardTop = 680;
+    const boardBottom = 2305;
+    const usableWidth = width - margin * 2;
+    const columnWidth = (usableWidth - gap * (options.length - 1)) / options.length;
+    const candidateHeight = 470;
+    const voteTop = boardTop + candidateHeight;
+    const voteHeight = boardBottom - voteTop;
+
+    for (const [index, option] of options.entries()) {
+      const x = margin + index * (columnWidth + gap);
+      const centerX = x + columnWidth / 2;
+
+      context.fillStyle = option.color;
+      context.fillRect(x, boardTop, columnWidth, candidateHeight);
+
+      const imageWidth = Math.min(columnWidth - 70, 300);
+      const imageHeight = 300;
+      const imageX = centerX - imageWidth / 2;
+      const imageY = boardTop + 32;
       context.fillStyle = "#FFFDF5";
-      context.fillRect(x, y, imageSize, imageHeight);
-      context.lineWidth = 10;
+      context.fillRect(imageX, imageY, imageWidth, imageHeight);
+      context.lineWidth = 7;
       context.strokeStyle = "#171713";
-      context.strokeRect(x, y, imageSize, imageHeight);
+      context.strokeRect(imageX, imageY, imageWidth, imageHeight);
 
       if (option.image) {
         try {
           const image = await loadCanvasImage(option.image);
-          drawContainImage(context, image, x, y, imageSize, imageHeight, 16);
+          drawContainImage(context, image, imageX, imageY, imageWidth, imageHeight, 18);
         } catch {
-          context.fillStyle = option.color;
-          context.fillRect(x + 8, y + 8, imageSize - 16, imageHeight - 16);
+          context.fillStyle = `${option.color}33`;
+          context.fillRect(imageX + 8, imageY + 8, imageWidth - 16, imageHeight - 16);
         }
       } else {
         context.fillStyle = `${option.color}33`;
-        context.fillRect(x + 8, y + 8, imageSize - 16, imageHeight - 16);
+        context.fillRect(imageX + 8, imageY + 8, imageWidth - 16, imageHeight - 16);
         context.fillStyle = "#171713";
-        context.font = "900 92px Arial Black, Arial, sans-serif";
-        context.fillText(String(index + 1).padStart(2, "0"), centerX, y + imageHeight / 2);
+        context.font = "900 88px Arial Black, Arial, sans-serif";
+        context.fillText(String(index + 1).padStart(2, "0"), centerX, imageY + imageHeight / 2);
       }
 
       context.fillStyle = readableInk(option.color);
-      context.strokeStyle = readableInk(option.color) === "#171713" ? "#FFFDF5" : "#171713";
-      context.lineWidth = 12;
-      context.font = `900 ${options.length > 4 ? 30 : 42}px Arial Black, Arial, sans-serif`;
+      context.font = `900 ${options.length > 4 ? 34 : 44}px Arial Black, Arial, sans-serif`;
       const name = option.name || `候補${index + 1}`;
-      context.strokeText(name, centerX, y + imageHeight + 58, bandWidth - 22);
-      context.fillText(name, centerX, y + imageHeight + 58, bandWidth - 22);
+      context.fillText(name, centerX, boardTop + 405, columnWidth - 32);
+
+      context.fillStyle = "#FFFDF5";
+      context.fillRect(x, voteTop, columnWidth, voteHeight);
+      context.lineWidth = 8;
+      context.strokeStyle = option.color;
+      context.strokeRect(x, voteTop, columnWidth, voteHeight);
+
+      context.fillStyle = "#171713";
+      context.font = `800 ${options.length > 4 ? 24 : 30}px Arial, sans-serif`;
+      context.fillText("この欄にシールを貼って投票", centerX, voteTop + 62, columnWidth - 30);
+
     }
 
     context.fillStyle = "#171713";
-    context.fillRect(70, size - 220, size - 140, 132);
-    context.fillStyle = "#FFFDF5";
-    context.font = "900 42px Arial Black, Arial, sans-serif";
-    context.fillText(callout.toUpperCase(), size / 2, size - 154, size - 210);
-    context.font = "700 23px Arial, sans-serif";
-    context.fillStyle = "rgba(255,253,245,.86)";
-    context.fillText("構図の下書き • この画像をLLMのプロンプトに添付してください", size / 2, size - 42);
+    context.font = "700 25px Arial, sans-serif";
+    context.fillText("A4横・300dpi構図下書き ｜ LLMで仕上げた後、印刷して丸いシールで投票してください", width / 2, 2400);
 
     const link = document.createElement("a");
-    link.download = "投票ラボ-下書き.png";
+    link.download = "投票ラボ-A4横-シール投票-下書き.png";
     link.href = canvas.toDataURL("image/png");
     link.click();
     showNotice("下書き画像をダウンロードしました。");
@@ -432,7 +470,7 @@ SNS投稿に使える高解像度の1:1正方形画像を、完成版として1�
       <section className="intro" id="top">
         <p className="kicker"><span>新機能</span> いつもの話題を投票ポスターに</p>
         <h1>あなたの一票を<br /><em>見逃せなくする。</em></h1>
-        <p className="intro-copy">候補と写真を追加するだけ。画像から色を読み取り、目を引く投票ポスターの下書きと、画像生成AIに渡せる日本語プロンプトをつくります。</p>
+        <p className="intro-copy">候補と写真を追加するだけ。画像から色を読み取り、A4横向きのシール投票ポスターと、画像生成AIに渡せる日本語プロンプトをつくります。</p>
       </section>
 
       <section className="studio-shell" aria-label="投票ポスター作成画面">
@@ -457,7 +495,7 @@ SNS投稿に使える高解像度の1:1正方形画像を、完成版として1�
               <input id="eyebrow" value={eyebrow} maxLength={36} onChange={(event) => setEyebrow(event.target.value)} />
             </div>
             <div className="field-group compact">
-              <label htmlFor="callout">呼びかけ</label>
+              <label htmlFor="callout">投票方法</label>
               <input id="callout" value={callout} maxLength={40} onChange={(event) => setCallout(event.target.value)} />
             </div>
           </div>
@@ -549,52 +587,54 @@ SNS投稿に使える高解像度の1:1正方形画像を、完成版として1�
         <div className="preview-panel">
           <div className="preview-toolbar">
             <div>
-              <span className="live-dot" /> ポスターをプレビュー
+              <span className="live-dot" /> A4横・シール投票ポスター
             </div>
-            <button type="button" onClick={exportDraft}>下書きを保存 <span aria-hidden="true">↓</span></button>
+            <button type="button" onClick={exportDraft}>A4横の下書きを保存 <span aria-hidden="true">↓</span></button>
           </div>
 
           <div className="poster-frame">
             <div className={`poster poster-${options.length}`}>
-              <div className="poster-bands" aria-hidden="true">
-                {options.map((option) => <span key={option.id} style={{ background: option.color }} />)}
-              </div>
               <div className="poster-grain" />
-              <div className="poster-topline">
-                <span>★</span>
-                <strong>{eyebrow || "みんなの推し総選挙"}</strong>
-                <span>★</span>
+              <div className="poster-heading">
+                <div className="poster-topline">
+                  <span>★</span>
+                  <strong>{eyebrow || "みんなの推し総選挙"}</strong>
+                  <span>★</span>
+                </div>
+                <div className="poster-title-row">
+                  <h2>{title || "あなたの一票はどれ？"}</h2>
+                  <div className="poster-method"><span>投票方法</span><strong>{callout || "好きな候補の欄にシールを貼って投票！"}</strong></div>
+                </div>
               </div>
-              <h2>{title || "あなたの一票はどれ？"}</h2>
-              <div className="poster-options">
+              <div className="poster-voting-board">
                 {options.map((option, index) => (
-                  <div className="poster-option" key={option.id}>
-                    <div className="poster-image-wrap">
-                      <span className="poster-number">{String(index + 1).padStart(2, "0")}</span>
-                      {option.image ? (
-                        <img src={option.image} alt="" />
-                      ) : (
-                        <div className="poster-placeholder">
-                          <span>{(option.name || "?").slice(0, 1).toUpperCase()}</span>
-                          <small>写真を追加</small>
-                        </div>
-                      )}
+                  <div className="vote-column" key={option.id} style={{ "--option-color": option.color } as React.CSSProperties}>
+                    <div className="vote-candidate" style={{ background: option.color, color: readableInk(option.color) }}>
+                      <div className="poster-image-wrap">
+                        <span className="poster-number">{String(index + 1).padStart(2, "0")}</span>
+                        {option.image ? (
+                          <img src={option.image} alt="" />
+                        ) : (
+                          <div className="poster-placeholder">
+                            <span>{(option.name || "?").slice(0, 1).toUpperCase()}</span>
+                            <small>写真を追加</small>
+                          </div>
+                        )}
+                      </div>
+                      <h3>{option.name || `候補${index + 1}`}</h3>
                     </div>
-                    <h3 style={{ color: readableInk(option.color) }}>{option.name || `候補${index + 1}`}</h3>
+                    <div className="sticker-zone">
+                      <p>この欄にシールを貼って投票</p>
+                    </div>
                   </div>
                 ))}
               </div>
-              <div className="poster-callout">
-                <span>投票しよう</span>
-                <strong>{callout || "あなたの推しを選ぼう"}</strong>
-                <span aria-hidden="true">→</span>
-              </div>
               <div className="poster-footer">
-                <span>ひとつの質問</span><b>•</b><span>ひとつの選択</span><b>•</b><span>みんなで決着</span>
+                <span>A4横向き</span><b>•</b><span>シールで投票</span><b>•</b><span>みんなで決着</span>
               </div>
             </div>
           </div>
-          <p className="preview-note"><span>ヒント</span> 保存した下書き画像が、LLMで完成版をつくるための構図見本になります。</p>
+          <p className="preview-note"><span>ヒント</span> 下半分の空白は、印刷後に丸いシールを自由に貼る投票欄です。</p>
         </div>
       </section>
 
@@ -603,9 +643,9 @@ SNS投稿に使える高解像度の1:1正方形画像を、完成版として1�
           <span className="panel-number inverted">02</span>
           <p>AIで完成させる</p>
           <h2>LLMへの入力内容は<br />これで完成。</h2>
-          <p className="prompt-copy">上の下書き画像を保存し、画像を扱えるLLMへ添付して、この日本語プロンプトを貼り付けてください。候補名・順番・色は編集内容に合わせて自動更新されます。</p>
+          <p className="prompt-copy">上のA4横向き下書きを保存し、画像を扱えるLLMへ添付して、この日本語プロンプトを貼り付けてください。候補名・順番・色と、空のシール投票欄が自動で指示に反映されます。</p>
           <ol>
-            <li><span>1</span> 下書きPNGを保存する</li>
+            <li><span>1</span> A4横の下書きPNGを保存する</li>
             <li><span>2</span> LLMへ画像を添付する</li>
             <li><span>3</span> プロンプトを貼って生成する</li>
           </ol>
@@ -618,8 +658,8 @@ SNS投稿に使える高解像度の1:1正方形画像を、完成版として1�
           <pre>{generatedPrompt}</pre>
           <div className="prompt-card-foot">
             <span><b>{options.length}</b>個の候補を反映</span>
-            <span>出力比率 <b>1:1</b></span>
-            <span><b>高画質</b>を推奨</span>
+            <span>用紙 <b>A4横</b></span>
+            <span><b>300dpi</b>を指定</span>
           </div>
         </div>
       </section>
